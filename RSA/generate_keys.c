@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
 #define E_VALUE 3
@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
     unsigned int de;
-    long n;
+    long unsigned int n;
 } Key;
 
 typedef struct {
@@ -43,7 +43,7 @@ PrimePair generatePrimes() {
     return primes;
 }
 
-int computeD(long phi) {
+int computeD(long unsigned int phi) {
     unsigned int d = 3;
     while ((d * E_VALUE) % phi != 1) {
         d++;
@@ -53,8 +53,8 @@ int computeD(long phi) {
 
 Keys generateKeys() {
     PrimePair primes = generatePrimes();
-    long n = primes.prime1 * primes.prime2; 
-    long phi = (primes.prime1 - 1) * (primes.prime2 - 1);   
+    long unsigned int n = primes.prime1 * primes.prime2; 
+    long unsigned int phi = (primes.prime1 - 1) * (primes.prime2 - 1);   
     unsigned int d = computeD(phi);
     // int d = 3;
     Key privateKey = {d, n};
@@ -70,8 +70,21 @@ Keys generateKeys() {
     return keys;
 }
 
-char encryptChar(char plaintext, Key key) {
-    return (plaintext * key.de) % key.n;
+char modChar(char plaintext, Key key) {
+    unsigned int result = 1;
+    unsigned int base = plaintext;
+    unsigned int power = key.de;
+    unsigned long int mod = key.n;
+    
+    while (power > 0) {
+        if (power % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        power >>= 1;
+        base = (base * base) % mod;
+    }
+
+    return result;
 }
 
 void encryptFile(FILE* file, Key key) {
@@ -90,7 +103,7 @@ void encryptFile(FILE* file, Key key) {
             if (content[i] == '\0') {
                 break;
             }
-            content[i] = encryptChar(content[i], key);
+            content[i] = modChar(content[i], key);
         }
 
         fputs(content, outfile);

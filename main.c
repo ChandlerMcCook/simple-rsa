@@ -25,7 +25,6 @@ int main() {
     } else {
         encryptFile(infile, keys.priv);
     }
-    }
     
     fclose(infile);
     fclose(outfile);
