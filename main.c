@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "./RSA/generate_keys.c"
+#include "./RSA/rsa.c"
 
 int main() {
     char fileName[50];
