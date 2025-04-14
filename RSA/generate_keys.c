@@ -10,8 +10,8 @@ typedef struct {
 } PrimePair;
 
 typedef struct {
-    unsigned int de;
-    long unsigned int n;
+    long unsigned int de;
+    long long unsigned int n;
 } Key;
 
 typedef struct {
@@ -45,7 +45,7 @@ PrimePair generatePrimes() {
     return primes;
 }
 
-unsigned int computeE(long unsigned int phi) {
+long unsigned int computeE(long unsigned int phi) {
     unsigned int e = E_VALUE;
     while (e < phi) {
         if (phi % e != 0) {
@@ -56,8 +56,8 @@ unsigned int computeE(long unsigned int phi) {
     return -1; // Should not reach here
 }
 
-int computeD(long unsigned int phi, int e) {
-    unsigned int d = 3;
+long unsigned int computeD(long long unsigned int phi, int e) {
+    unsigned long int d = 3;
     while ((d * e) % phi != 1) {
         d++;
     }
@@ -66,10 +66,10 @@ int computeD(long unsigned int phi, int e) {
 
 Keys generateKeys() {
     PrimePair primes = generatePrimes();
-    long unsigned int n = primes.prime1 * primes.prime2; 
-    long unsigned int phi = (long unsigned int) (primes.prime1 - 1) * (primes.prime2 - 1);   
-    unsigned int e = computeE(phi);
-    unsigned int d = computeD(phi, e);
+    long long unsigned int n = primes.prime1 * primes.prime2; 
+    long long unsigned int phi = (long long unsigned int) (primes.prime1 - 1) * (primes.prime2 - 1);   
+    long unsigned int e = computeE(phi);
+    long unsigned int d = computeD(phi, e);
     Key privateKey = {d, n};
     Key publicKey = {e, n};
 
@@ -78,8 +78,8 @@ Keys generateKeys() {
     return keys;
 }
 
-unsigned int modExp(unsigned int base, unsigned int exp, unsigned int mod) {
-    unsigned int result = 1;
+long long unsigned int modExp(long long unsigned int base, long unsigned int exp, long long unsigned int mod) {
+    long long unsigned int result = 1;
     base = base % mod; 
 
     while (exp > 0) {
@@ -100,16 +100,15 @@ void rsa(FILE* file, Key key, const char* outputFileName, int encrypt) {
 
     FILE* outfile = fopen(outputFileName, "w");
 
-
     if (encrypt) {
         char c;
         while ((c = fgetc(file)) != EOF) {
-            unsigned int encryptedVal = modExp(c, key.de, key.n);
-            fprintf(outfile, "%u ", encryptedVal);
+            long long unsigned int encryptedVal = modExp(c, key.de, key.n);
+            fprintf(outfile, "%llu ", encryptedVal);
         }
     } else {
-        unsigned int encryptedVal;
-        while ((fscanf(file, "%u", &encryptedVal)) == 1) {
+        long long unsigned int encryptedVal;
+        while ((fscanf(file, "%llu", &encryptedVal)) == 1) {
             char decrypted = (char) modExp(encryptedVal, key.de, key.n); 
             fputc(decrypted, outfile);
         }

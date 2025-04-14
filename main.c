@@ -23,11 +23,26 @@ int main() {
         publicKey = keys.pub;
         privateKey = keys.priv;
 
-        fprintf(keysFile, "Public Key: {%lu %u\n", publicKey.n, publicKey.de);
-        fprintf(keysFile, "Private Key: {%lu %u\n", privateKey.n, privateKey.de);
+        fprintf(keysFile, "Public Key: {%llu, %lu}\n", publicKey.n, publicKey.de);
+        fprintf(keysFile, "Private Key: {%llu, %lu}\n", privateKey.n, privateKey.de);
         printf("Keys generated and saved to keys.txt\n");
     } else {
-        
+        // ask user to enter a public or private key or both
+        printf("Would you like to enter a public key? (y/n): ");
+        char publicKeyChoice; 
+        scanf(" %c", &publicKeyChoice);
+        if (publicKeyChoice == 'y') {
+            printf("Enter public key (n e): ");
+            scanf("%llu %lu", &publicKey.n, &publicKey.de);
+        }
+
+        printf("Would you like to enter a private key? (y/n): ");
+        char privateKeyChoice;
+        scanf(" %c", &privateKeyChoice);
+        if (privateKeyChoice == 'y') {
+            printf("Enter private key (n d): ");
+            scanf("%llu %lu", &privateKey.n, &privateKey.de);
+        }
     }
     
     FILE* infile;
@@ -36,28 +51,41 @@ int main() {
         printf("Enter a filename: ");
         scanf("%s", fileName);
     
-        // encrypt or decrypt the file
-        printf("Encrypt or decrypt? (e/d): ");
-        char choice;
-        scanf(" %c", &choice);
         
         infile = fopen(fileName, "r");
-    
-        char content[1000];
-        int buffSize = sizeof(content);
     
         if (infile == NULL) {
             printf("Error opening file");
             return 1;
         } else {
-            if (choice == 'e') {
-                printf("Encrypting...\n");
-                rsa(infile, keys.pub, "ciphertext.txt", 1);
-            } else if (choice == 'd') {
-                printf("Decrypting...\n");
-                rsa(infile, keys.priv, "decrypted.txt", 0);
+            printf("Which key would you like to use (u/v): ");
+            char keyChoice;
+            scanf(" %c", &keyChoice);
+
+            printf("Encrypt or decrypt? (e/d): ");
+            char encryptionChoice;
+            scanf(" %c", &encryptionChoice);
+            int encrypt = 0;
+            if (encryptionChoice == 'e') {
+                encrypt = 1;
+            } else if (encryptionChoice == 'd') {
+                encrypt = 0;
             } else {
-                printf("Invalid choice\n");
+                printf("Invalid encryption choice\n");
+            }
+
+            printf("Enter new filename: ");
+            char newFileName[50];
+            scanf("%s", newFileName);
+
+            if (keyChoice == 'u') {
+                printf("Encrypting...\n");
+                rsa(infile, publicKey, newFileName, encrypt);
+            } else if (keyChoice == 'v') {
+                printf("Decrypting...\n");
+                rsa(infile, privateKey, newFileName, encrypt);
+            } else {
+                printf("Invalid key choice\n");
             }
         }
 
