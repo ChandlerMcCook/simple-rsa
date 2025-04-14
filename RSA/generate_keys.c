@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define E_VALUE 3
@@ -29,7 +30,8 @@ int isPrime(int num) {
 }
 
 PrimePair generatePrimes() {
-    unsigned int p1, p2; 
+    unsigned int p1, p2;
+    srand(time(NULL));  
 
     do {
         p1 = rand();
@@ -43,9 +45,20 @@ PrimePair generatePrimes() {
     return primes;
 }
 
-int computeD(long unsigned int phi) {
+unsigned int computeE(long unsigned int phi) {
+    unsigned int e = E_VALUE;
+    while (e < phi) {
+        if (phi % e != 0) {
+            return e;
+        }
+        e += 2; 
+    }
+    return -1; // Should not reach here
+}
+
+int computeD(long unsigned int phi, int e) {
     unsigned int d = 3;
-    while ((d * E_VALUE) % phi != 1) {
+    while ((d * e) % phi != 1) {
         d++;
     }
     return d;
@@ -54,58 +67,53 @@ int computeD(long unsigned int phi) {
 Keys generateKeys() {
     PrimePair primes = generatePrimes();
     long unsigned int n = primes.prime1 * primes.prime2; 
-    long unsigned int phi = (primes.prime1 - 1) * (primes.prime2 - 1);   
-    unsigned int d = computeD(phi);
-    // int d = 3;
+    long unsigned int phi = (long unsigned int) (primes.prime1 - 1) * (primes.prime2 - 1);   
+    unsigned int e = computeE(phi);
+    unsigned int d = computeD(phi, e);
     Key privateKey = {d, n};
-    Key publicKey = {E_VALUE, n};
-
-    printf("Phi: %d\n", phi);
-    printf("n: %d\n", n);
-    printf("Prime 1: %d\n", primes.prime1);
-    printf("Prime 2: %d\n", primes.prime2);
+    Key publicKey = {e, n};
 
     Keys keys = {privateKey, publicKey};
 
     return keys;
 }
 
-char modChar(char plaintext, Key key) {
+unsigned int modExp(unsigned int base, unsigned int exp, unsigned int mod) {
     unsigned int result = 1;
-    unsigned int base = plaintext;
-    unsigned int power = key.de;
-    unsigned long int mod = key.n;
-    
-    while (power > 0) {
-        if (power % 2 == 1) {
+    base = base % mod; 
+
+    while (exp > 0) {
+        if (exp % 2 == 1) {
             result = (result * base) % mod;
         }
-        power >>= 1;
-        base = (base * base) % mod;
+        exp = exp >> 1; 
+        base = (base * base) % mod; 
     }
-
     return result;
 }
 
-void encryptFile(FILE* file, Key key) {
+void rsa(FILE* file, Key key, const char* outputFileName, int encrypt) {
     if (file == NULL) {
         printf("Encrypt error: please provide file\n");
         return;
     }
 
-    FILE* outfile;
-    outfile = fopen("ciphertext.txt", "w");
-    char content[1000];
-    int buffSize = sizeof(content);
+    FILE* outfile = fopen(outputFileName, "w");
 
-    while(fgets(content, sizeof(content), file)) {
-        for (int i=0; i<buffSize; i++) {
-            if (content[i] == '\0') {
-                break;
-            }
-            content[i] = modChar(content[i], key);
+
+    if (encrypt) {
+        char c;
+        while ((c = fgetc(file)) != EOF) {
+            unsigned int encryptedVal = modExp(c, key.de, key.n);
+            fprintf(outfile, "%u ", encryptedVal);
         }
-
-        fputs(content, outfile);
+    } else {
+        unsigned int encryptedVal;
+        while ((fscanf(file, "%u", &encryptedVal)) == 1) {
+            char decrypted = (char) modExp(encryptedVal, key.de, key.n); 
+            fputc(decrypted, outfile);
+        }
     }
+
+    fclose(outfile);
 }
